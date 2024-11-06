@@ -1,0 +1,5 @@
+appid: "rooch-prediction-market"
+mode: debug
+bust: 500
+env: "local"
+Port: "50051"
