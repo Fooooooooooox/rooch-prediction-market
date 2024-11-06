@@ -8,7 +8,6 @@ require (
 	github.com/go-macaron/binding v1.2.0
 	github.com/go-macaron/session v1.0.2
 	github.com/go-macaron/toolbox v0.0.0-20200329073429-4401f4ce0f55
-	github.com/goodwood511/chain_pay_sdk v0.0.0-20241021025029-8083c8331922
 	github.com/spf13/viper v1.19.0
 	gopkg.in/macaron.v1 v1.5.0
 	gorm.io/driver/postgres v1.5.9

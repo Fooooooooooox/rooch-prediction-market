@@ -94,6 +94,8 @@ func CreateServer(modes ...string) *macaron.Macaron {
 
 	m.Post("api/v1/markets", binding.Bind(dtos.Market{}), handlers.CreateMarket)
 	m.Get("api/v1/markets", handlers.GetMarkets)
+	m.Get("api/v1/markets/:id", handlers.GetMarket)
+	m.Put("api/v1/markets/:id", binding.Bind(dtos.UpdateMarket{}), handlers.UpdateMarket)
 
 	m.Get("api/v1/trades/:id", handlers.GetTrades)
 	m.Post("api/v1/trade", binding.Bind(dtos.Trade{}), handlers.CreateTrade)

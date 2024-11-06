@@ -20,7 +20,7 @@ func CreateMarket(ctx *macaron.Context, req dtos.Market, marketService *services
 		PriceNo:       0.5,
 		VoteYesAmount: 0,
 		VoteNoAmount:  0,
-		Status:        models.MarketStatusVoting,
+		Status:        models.MarketStatusOpen,
 	}
 
 	err := marketService.MarketRepo.Create(&market)
@@ -39,6 +39,51 @@ func GetMarkets(ctx *macaron.Context, marketService *services.MarketService) {
 		return
 	}
 	ctx.JSON(http.StatusOK, markets)
+}
+
+func GetMarket(ctx *macaron.Context, marketService *services.MarketService) {
+	marketID, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
+		return
+	}
+	market, err := marketService.MarketRepo.GetById(uint(marketID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, market)
+}
+
+func UpdateMarket(ctx *macaron.Context, req dtos.UpdateMarket, marketService *services.MarketService) {
+	marketID, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
+		return
+	}
+
+	market, err := marketService.MarketRepo.GetById(uint(marketID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	market.Title = req.Title
+	market.Description = req.Description
+	market.Status = models.MarketStatus(req.Status)
+	market.Price = req.Price
+	market.PriceNo = req.PriceNo
+	market.YesAmount = req.YesAmount
+	market.NoAmount = req.NoAmount
+	market.VoteYesAmount = req.VoteYesAmount
+	market.VoteNoAmount = req.VoteNoAmount
+
+	if err := marketService.Db.Save(&market).Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, market)
 }
 
 func CreateTrade(ctx *macaron.Context, req dtos.Trade, marketService *services.MarketService) {
@@ -130,7 +175,7 @@ func CreateVote(ctx *macaron.Context, req dtos.Vote, marketService *services.Mar
 		market.VoteNoAmount += req.Amount
 	}
 
-	err = marketService.MarketRepo.Update(func() models.Market { return *market }, "vote_yes_amount", "vote_no_amount")
+	err = marketService.Db.Save(&market).Error
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return

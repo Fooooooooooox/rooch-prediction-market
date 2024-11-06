@@ -20,3 +20,15 @@ type Market struct {
 	Title       string `json:"title" binding:"required"`
 	Description string `json:"description" binding:"required"`
 }
+
+type UpdateMarket struct {
+	Title         string  `json:"title"`
+	Description   string  `json:"description"`
+	Status        string  `json:"status"`
+	Price         float64 `json:"price"`
+	PriceNo       float64 `json:"price_no"`
+	YesAmount     uint    `json:"yes_amount"`
+	NoAmount      uint    `json:"no_amount"`
+	VoteYesAmount uint    `json:"vote_yes_amount"`
+	VoteNoAmount  uint    `json:"vote_no_amount"`
+}

@@ -32,8 +32,7 @@ func (ms *MarketService) UpdatePrices(market *models.Market) error {
 		market.PriceNo = float64(market.NoAmount) / float64(totalAmount)
 	}
 
-	err := ms.MarketRepo.Update(func() models.Market { return *market }, "price", "price_no")
-	if err != nil {
+	if err := ms.Db.Save(market).Error; err != nil {
 		return err
 	}
 	return nil
