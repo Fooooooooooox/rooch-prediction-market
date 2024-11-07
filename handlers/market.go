@@ -113,10 +113,10 @@ func CreateTrade(ctx *macaron.Context, req dtos.Trade, marketService *services.M
 		return
 	}
 
-	if market.Status != models.MarketStatusOpen {
-		ctx.JSON(http.StatusBadRequest, "Market is not open")
-		return
-	}
+	// if market.Status != models.MarketStatusOpen {
+	// 	ctx.JSON(http.StatusBadRequest, "Market is not open")
+	// 	return
+	// }
 
 	trade := models.Trade{
 		MarketID: market.ID,
@@ -170,10 +170,10 @@ func CreateVote(ctx *macaron.Context, req dtos.Vote, marketService *services.Mar
 		return
 	}
 
-	if market.Status != models.MarketStatusVoting {
-		ctx.JSON(http.StatusBadRequest, "Market is not voting")
-		return
-	}
+	// if market.Status != models.MarketStatusVoting {
+	// 	ctx.JSON(http.StatusBadRequest, "Market is not voting")
+	// 	return
+	// }
 
 	vote := models.Vote{
 		MarketID: market.ID,
@@ -231,10 +231,10 @@ func GetClaimableAmount(ctx *macaron.Context, marketService *services.MarketServ
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	if market.Status != models.MarketStatusClosed {
-		ctx.JSON(http.StatusBadRequest, "Market is not setteled")
-		return
-	}
+	// if market.Status != models.MarketStatusClosed {
+	// 	ctx.JSON(http.StatusBadRequest, "Market is not setteled")
+	// 	return
+	// }
 
 	claimableAmount, err := marketService.CalculateClaimableAmount(address, market)
 	if err != nil {

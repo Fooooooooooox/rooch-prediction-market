@@ -141,8 +141,10 @@ func (ms *MarketService) CalculateClaimableAmount(address string, market *models
 	var claimableAmount uint
 	if market.Result { // yes wins
 		claimableAmount += market.NoAmount * userMarketBalanceYes.Balance / market.YesAmount
+		claimableAmount += userMarketBalanceNo.Balance
 	} else {
 		claimableAmount += market.YesAmount * userMarketBalanceNo.Balance / market.NoAmount
+		claimableAmount += userMarketBalanceYes.Balance
 	}
 
 	return claimableAmount, nil
