@@ -41,3 +41,9 @@ type Vote struct {
 	Tick     string `json:"tick"` // yes or no
 	Amount   uint   `json:"amount"`
 }
+
+type UserBalance struct {
+	BaseModel
+	Address string `json:"address"`
+	Balance uint   `json:"balance"`
+}

@@ -25,11 +25,13 @@ func NewMarketService(db *gorm.DB) *MarketService {
 func (ms *MarketService) UpdatePrices(market *models.Market) error {
 	totalAmount := market.YesAmount + market.NoAmount
 	if totalAmount == 0 {
-		market.Price = 0.5
-		market.PriceNo = 0.5
+		market.Price = 1
+		market.PriceNo = 1
 	} else {
-		market.Price = float64(market.YesAmount) / float64(totalAmount)
-		market.PriceNo = float64(market.NoAmount) / float64(totalAmount)
+		// Here, we calculate the price as the ratio of the amounts
+		k := float64(market.YesAmount) * float64(market.NoAmount)
+		market.Price = k / float64(market.NoAmount)
+		market.PriceNo = k / float64(market.YesAmount)
 	}
 
 	if err := ms.Db.Save(market).Error; err != nil {

@@ -32,3 +32,8 @@ type UpdateMarket struct {
 	VoteYesAmount uint    `json:"vote_yes_amount"`
 	VoteNoAmount  uint    `json:"vote_no_amount"`
 }
+
+type UpdateBalanceRequest struct {
+	Address string `json:"address" binding:"required"`
+	Amount  uint   `json:"amount" binding:"required"`
+}
