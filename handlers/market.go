@@ -118,6 +118,32 @@ func CreateTrade(ctx *macaron.Context, req dtos.Trade, marketService *services.M
 	// 	return
 	// }
 
+	userBalances, err := marketService.UserBalanceRepo.Find(map[string]interface{}{"address": req.Address})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var userBalance models.UserBalance
+	if len(userBalances) == 0 {
+		ctx.JSON(http.StatusBadRequest, "User balance not found")
+		return
+	} else {
+		userBalance = models.UserBalance{
+			BaseModel: models.BaseModel{
+				ID: userBalances[0].ID,
+			},
+			Address: req.Address,
+			Balance: userBalances[0].Balance - req.Amount,
+		}
+	}
+
+	err = marketService.Db.Save(&userBalance).Error
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	trade := models.Trade{
 		MarketID: market.ID,
 		Address:  req.Address,
