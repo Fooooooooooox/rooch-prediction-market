@@ -1,12 +1,35 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/rooch-prediction-market/backend/dtos"
 	"github.com/rooch-prediction-market/backend/models"
 	"gopkg.in/macaron.v1"
 )
+
+func GetUserMarketBalance(ctx *macaron.Context, db *models.DB) {
+	address := ctx.Params(":address")
+	marketID := ctx.Params(":marketId")
+
+	marketIDInt, err := strconv.Atoi(marketID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
+		return
+	}
+
+	var userMarketBalance models.UserMarketBalance
+	if err := db.Pg.Where("user_address = ? AND market_id = ?", address, marketIDInt).First(&userMarketBalance).Error; err != nil {
+		log.Printf("Error finding user market balance: %v", err)
+		ctx.JSON(http.StatusNotFound, "User market balance not found")
+		return
+	}
+
+	log.Printf("User market balance found: %+v", userMarketBalance)
+	ctx.JSON(http.StatusOK, userMarketBalance)
+}
 
 func GetUserBalance(ctx *macaron.Context, db *models.DB) {
 	address := ctx.Params("address")

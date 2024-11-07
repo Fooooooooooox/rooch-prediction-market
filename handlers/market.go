@@ -16,8 +16,8 @@ func CreateMarket(ctx *macaron.Context, req dtos.Market, marketService *services
 		Description:   req.Description,
 		YesAmount:     100,
 		NoAmount:      100,
-		Price:         1,
-		PriceNo:       1,
+		Prob:          1,
+		ProbNo:        1,
 		VoteYesAmount: 0,
 		VoteNoAmount:  0,
 		Status:        models.MarketStatusOpen,
@@ -42,12 +42,13 @@ func GetMarkets(ctx *macaron.Context, marketService *services.MarketService) {
 }
 
 func GetMarket(ctx *macaron.Context, marketService *services.MarketService) {
-	marketID, err := strconv.Atoi(ctx.Params("id"))
+	marketID := ctx.Params("marketId")
+	marketIDInt, err := strconv.Atoi(marketID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
 		return
 	}
-	market, err := marketService.MarketRepo.GetById(uint(marketID))
+	market, err := marketService.MarketRepo.GetById(uint(marketIDInt))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -56,13 +57,7 @@ func GetMarket(ctx *macaron.Context, marketService *services.MarketService) {
 }
 
 func UpdateMarket(ctx *macaron.Context, req dtos.UpdateMarket, marketService *services.MarketService) {
-	marketID, err := strconv.Atoi(ctx.Params("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
-		return
-	}
-
-	market, err := marketService.MarketRepo.GetById(uint(marketID))
+	market, err := marketService.MarketRepo.GetById(req.MarketID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -71,14 +66,38 @@ func UpdateMarket(ctx *macaron.Context, req dtos.UpdateMarket, marketService *se
 	market.Title = req.Title
 	market.Description = req.Description
 	market.Status = models.MarketStatus(req.Status)
-	market.Price = req.Price
-	market.PriceNo = req.PriceNo
+	market.Prob = req.Price
+	market.ProbNo = req.PriceNo
 	market.YesAmount = req.YesAmount
 	market.NoAmount = req.NoAmount
 	market.VoteYesAmount = req.VoteYesAmount
 	market.VoteNoAmount = req.VoteNoAmount
 
 	if err := marketService.Db.Save(&market).Error; err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, market)
+}
+
+func SettleMarket(ctx *macaron.Context, req dtos.SettleMarket, marketService *services.MarketService) {
+	market, err := marketService.MarketRepo.GetById(req.MarketID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if market.VoteYesAmount > market.VoteNoAmount {
+		market.Result = true
+	} else {
+		market.Result = false
+	}
+
+	market.Status = models.MarketStatusClosed
+
+	err = marketService.Db.Save(&market).Error
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -116,9 +135,9 @@ func CreateTrade(ctx *macaron.Context, req dtos.Trade, marketService *services.M
 	// Update market amounts based on trade
 	if req.Side == "buy" {
 		if req.Tick == "yes" {
-			err = marketService.BuyYesToken(req.MarketID, req.Amount)
+			err = marketService.BetOnYes(req.Address, req.MarketID, req.Amount)
 		} else {
-			err = marketService.BuyNoToken(req.MarketID, req.Amount)
+			err = marketService.BetOnNo(req.Address, req.MarketID, req.Amount)
 		}
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, err.Error())
@@ -130,13 +149,13 @@ func CreateTrade(ctx *macaron.Context, req dtos.Trade, marketService *services.M
 }
 
 func GetTrades(ctx *macaron.Context, marketService *services.MarketService) {
-	marketID, err := strconv.Atoi(ctx.Params("id"))
+	marketID, err := strconv.Atoi(ctx.Params("marketId"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
 		return
 	}
 
-	trades, err := marketService.TradeRepo.Find(map[string]interface{}{"market_id": marketID})
+	trades, err := marketService.TradeRepo.Find(map[string]interface{}{"marketId": marketID})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -185,16 +204,81 @@ func CreateVote(ctx *macaron.Context, req dtos.Vote, marketService *services.Mar
 }
 
 func GetVotes(ctx *macaron.Context, marketService *services.MarketService) {
-	marketID, err := strconv.Atoi(ctx.Params("id"))
+	marketID, err := strconv.Atoi(ctx.Params("marketId"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
 		return
 	}
 
-	votes, err := marketService.VoteRepo.Find(map[string]interface{}{"market_id": marketID})
+	votes, err := marketService.VoteRepo.Find(map[string]interface{}{"marketId": marketID})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	ctx.JSON(http.StatusOK, votes)
+}
+
+func GetClaimableAmount(ctx *macaron.Context, marketService *services.MarketService) {
+	address := ctx.Params("address")
+	marketID, err := strconv.Atoi(ctx.Params("marketId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, "Invalid market ID")
+		return
+	}
+
+	market, err := marketService.MarketRepo.GetById(uint(marketID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if market.Status != models.MarketStatusClosed {
+		ctx.JSON(http.StatusBadRequest, "Market is not setteled")
+		return
+	}
+
+	claimableAmount, err := marketService.CalculateClaimableAmount(address, market)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, claimableAmount)
+}
+
+func ClaimReward(ctx *macaron.Context, req dtos.Claim, marketService *services.MarketService) {
+	market, err := marketService.MarketRepo.GetById(req.MarketID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	claimableAmount, err := marketService.CalculateClaimableAmount(req.Address, market)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// increase user balance
+	userBalances, err := marketService.UserBalanceRepo.Find(map[string]interface{}{"address": req.Address})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if len(userBalances) == 0 {
+		userBalance := models.UserBalance{
+			BaseModel: models.BaseModel{
+				ID: userBalances[0].ID,
+			},
+			Address: req.Address,
+			Balance: userBalances[0].Balance + claimableAmount,
+		}
+
+		err = marketService.Db.Save(&userBalance).Error
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, claimableAmount)
 }

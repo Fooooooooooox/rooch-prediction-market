@@ -26,7 +26,7 @@ func DropTablesAndReCreate(db *models.DB) error {
 		}
 	}
 
-	db.Pg.AutoMigrate(&models.Trade{}, &models.Vote{})
+	db.Pg.AutoMigrate(&models.Trade{}, &models.Vote{}, &models.UserMarketBalance{}, &models.Market{})
 
 	log.Printf("auto migrate success\n")
 	return nil

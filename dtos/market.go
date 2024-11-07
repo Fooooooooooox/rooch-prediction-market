@@ -16,12 +16,18 @@ type Vote struct {
 	Amount   uint   `json:"amount" binding:"required"`
 }
 
+type Claim struct {
+	Address  string `json:"address" binding:"required"`
+	MarketID uint   `json:"market_id" binding:"required"`
+}
+
 type Market struct {
 	Title       string `json:"title" binding:"required"`
 	Description string `json:"description" binding:"required"`
 }
 
 type UpdateMarket struct {
+	MarketID      uint    `json:"market_id" binding:"required"`
 	Title         string  `json:"title"`
 	Description   string  `json:"description"`
 	Status        string  `json:"status"`
@@ -31,6 +37,10 @@ type UpdateMarket struct {
 	NoAmount      uint    `json:"no_amount"`
 	VoteYesAmount uint    `json:"vote_yes_amount"`
 	VoteNoAmount  uint    `json:"vote_no_amount"`
+}
+
+type SettleMarket struct {
+	MarketID uint `json:"market_id" binding:"required"`
 }
 
 type UpdateBalanceRequest struct {

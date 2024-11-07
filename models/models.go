@@ -53,7 +53,7 @@ func New(conf *config.Config) *DB {
 	}
 
 	// create tables if not exists
-	d.Pg.AutoMigrate(&Trade{}, &Vote{}, &Market{}, &UserBalance{})
+	d.Pg.AutoMigrate(&Trade{}, &Vote{}, &Market{}, &UserBalance{}, &UserMarketBalance{})
 
 	return d
 }

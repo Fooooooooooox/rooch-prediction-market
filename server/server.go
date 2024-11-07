@@ -95,17 +95,22 @@ func CreateServer(modes ...string) *macaron.Macaron {
 	m.Post("api/v1/user-balance/add", binding.Bind(dtos.UpdateBalanceRequest{}), handlers.AddUserBalance)
 	m.Post("api/v1/user-balance/decrease", binding.Bind(dtos.UpdateBalanceRequest{}), handlers.DecreaseUserBalance)
 	m.Get("api/v1/user-balance/:address", handlers.GetUserBalance)
+	m.Get("api/v1/user-market-balance/:address/:marketId", handlers.GetUserMarketBalance)
 
 	m.Post("api/v1/markets", binding.Bind(dtos.Market{}), handlers.CreateMarket)
 	m.Get("api/v1/markets", handlers.GetMarkets)
-	m.Get("api/v1/markets/:id", handlers.GetMarket)
-	m.Put("api/v1/markets/:id", binding.Bind(dtos.UpdateMarket{}), handlers.UpdateMarket)
+	m.Get("api/v1/markets/:marketId", handlers.GetMarket)
+	m.Put("api/v1/markets/update", binding.Bind(dtos.UpdateMarket{}), handlers.UpdateMarket)
+	m.Post("api/v1/markets/settle", binding.Bind(dtos.SettleMarket{}), handlers.SettleMarket)
 
-	m.Get("api/v1/trades/:id", handlers.GetTrades)
+	m.Get("api/v1/trades/:marketId", handlers.GetTrades)
 	m.Post("api/v1/trade", binding.Bind(dtos.Trade{}), handlers.CreateTrade)
 
-	m.Get("api/v1/votes/:id", handlers.GetVotes)
+	m.Get("api/v1/votes/:marketId", handlers.GetVotes)
 	m.Post("api/v1/vote", binding.Bind(dtos.Vote{}), handlers.CreateVote)
+
+	m.Get("api/v1/claim/:address/:marketId", handlers.GetClaimableAmount)
+	m.Post("api/v1/claim", binding.Bind(dtos.Claim{}), handlers.ClaimReward)
 
 	return m
 }
